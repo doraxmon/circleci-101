@@ -5,18 +5,33 @@ jobs:
       - image: circleci/ruby:2.4.1
     steps:
       - checkout
-      - run: echo "a first hello"\
-      - run: sleep 25
+      - run: echo "a first hello"
+      - run: mkdir -p my_workspace
+      - run: echo "Trying out workspace" > my_workspace/echo-output
+      - persistent_to_workspace:
+        root: my_workspace
+        paths:
+          - echo-output
   two:
     docker:
       - image: circleci/ruby:2.4.1
     steps:
       - checkout
-      - run: echo "a first hello"
-      - run: sleep 15
+      - run: echo "a more familiar hi"
+      - attach_workspace:
+        at: my_workspace
+        
+      - run: |
+          if [[ $(cat my_workspace/echo-output) == "trying out workspace" ]]; then
+            echo "it worked";
+          else
+            echo "nope!"; exit 1
+          fi
 workflows:
   version: 2
   one_and_two:
     jobs:
       - one
-      - two
+      - two:
+          requires:
+            - one
